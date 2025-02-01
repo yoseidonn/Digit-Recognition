@@ -1,7 +1,6 @@
 """
 MNIST veri seti kullanarak rakam tanıma modelini eğiten script.
-Model performansını test eder ve en iyi modeli kaydet.
-Eğitim sırasında ilerleme durumu ve doğruluk oranı gösterilir.
+Geliştirilmiş eğitim süreci ve veri artırma teknikleri içerir.
 """
 
 import torch
@@ -11,11 +10,15 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from model import DigitRecognitionCNN
 import os
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-
-def train_model(model, device, train_loader, optimizer, epoch):
+def train_model(model, device, train_loader, optimizer, epoch, scheduler):
     """Her epoch için modeli eğitir ve kayıp değerini gösterir."""
     model.train()
+    total_loss = 0
+    correct = 0
+    total = 0
+    
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
@@ -23,9 +26,23 @@ def train_model(model, device, train_loader, optimizer, epoch):
         loss = nn.CrossEntropyLoss()(output, target)
         loss.backward()
         optimizer.step()
+        
+        # İstatistikleri hesapla
+        total_loss += loss.item()
+        pred = output.argmax(dim=1, keepdim=True)
+        correct += pred.eq(target.view_as(pred)).sum().item()
+        total += target.size(0)
+        
         if batch_idx % 100 == 0:
             print(f'Epoch: {epoch} [{batch_idx * len(data)}/{len(train_loader.dataset)} '
-                  f'({100. * batch_idx / len(train_loader):.0f}%)]\tLoss: {loss.item():.6f}')
+                  f'({100. * batch_idx / len(train_loader):.0f}%)]\t'
+                  f'Loss: {loss.item():.6f}\t'
+                  f'Accuracy: {100. * correct / total:.2f}%')
+    
+    # Epoch sonunda scheduler'ı güncelle
+    avg_loss = total_loss / len(train_loader)
+    scheduler.step(avg_loss)
+    return avg_loss
 
 def test_model(model, device, test_loader):
     """Test veri seti üzerinde modelin performansını değerlendirir."""
@@ -47,38 +64,47 @@ def test_model(model, device, test_loader):
     return accuracy
 
 def main():
-    # Temel eğitim ayarları
-    batch_size = 64  # Her adımda işlenecek görüntü sayısı
-    epochs = 10      # Tüm veri setinin kaç kez işleneceği
-    learning_rate = 0.01  # Öğrenme hızı
+    # Eğitim parametreleri
+    batch_size = 128  # Batch size artırıldı
+    epochs = 30       # Epoch sayısı artırıldı
+    learning_rate = 0.01
     
     # GPU varsa kullan, yoksa CPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"Using device: {device}")
     
-    # MNIST veri seti için standart normalizasyon
-    transform = transforms.Compose([
+    # Geliştirilmiş veri dönüşümleri
+    train_transform = transforms.Compose([
+        transforms.RandomRotation(10),  # Rastgele döndürme
+        transforms.RandomAffine(0, translate=(0.1, 0.1)),  # Rastgele kaydırma
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
     ])
     
-    # Eğitim ve test veri setlerini hazırla
-    train_dataset = datasets.MNIST('../data', train=True, download=True, transform=transform)
-    test_dataset = datasets.MNIST('../data', train=False, transform=transform)
+    test_transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.1307,), (0.3081,))
+    ])
     
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size)
+    # Veri setlerini hazırla
+    train_dataset = datasets.MNIST('../data', train=True, download=True, transform=train_transform)
+    test_dataset = datasets.MNIST('../data', train=False, transform=test_transform)
     
-    # Model ve optimizasyon ayarları
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4)
+    
+    # Model ve optimizasyon
     model = DigitRecognitionCNN().to(device)
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3, verbose=True)
     
     # Eğitim döngüsü
     best_accuracy = 0
     for epoch in range(1, epochs + 1):
-        train_model(model, device, train_loader, optimizer, epoch)
+        avg_loss = train_model(model, device, train_loader, optimizer, epoch, scheduler)
         accuracy = test_model(model, device, test_loader)
         
-        # Eğer bu en iyi sonuçsa modeli kaydet
+        # En iyi modeli kaydet
         if accuracy > best_accuracy:
             best_accuracy = accuracy
             model_path = os.path.join('..', 'models', 'best_model.pth')

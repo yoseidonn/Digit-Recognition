@@ -1,5 +1,7 @@
 """
-Giriş olarak 28x28 boyutunda gri tonlamalı görüntüler alır ve 0-9 arası rakamları sınıflandırır.
+Geliştirilmiş CNN modeli - MNIST rakam tanıma için optimize edilmiş
+Giriş: 28x28 boyutunda gri tonlamalı görüntüler
+Çıkış: 0-9 arası rakam tahminleri
 """
 
 import torch
@@ -10,31 +12,51 @@ import torch.nn.functional as F
 class DigitRecognitionCNN(nn.Module):
     def __init__(self):
         super(DigitRecognitionCNN, self).__init__()
-        # İlk katman: 1 kanallı girişten 32 özellik haritası çıkarır
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=3)
-        # İkinci katman: 32 kanallı girişten 64 özellik haritası çıkarır
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3)
+        # Daha derin konvolüsyon katmanları
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)
+        self.bn1 = nn.BatchNorm2d(32)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        self.bn2 = nn.BatchNorm2d(64)
+        self.conv3 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
+        self.bn3 = nn.BatchNorm2d(64)
         
-        # Özellik haritalarını düz bir vektöre çevirip sınıflandırma yapar
-        self.fc1 = nn.Linear(64 * 5 * 5, 128)
-        self.fc2 = nn.Linear(128, 10)
+        # Tam bağlantılı katmanlar
+        self.fc1 = nn.Linear(64 * 3 * 3, 256)
+        self.fc2 = nn.Linear(256, 128)
+        self.fc3 = nn.Linear(128, 10)
         
-        # Aşırı öğrenmeyi önlemek için dropout
-        self.dropout = nn.Dropout2d(0.25)
+        # Dropout katmanları
+        self.dropout1 = nn.Dropout2d(0.25)
+        self.dropout2 = nn.Dropout2d(0.5)
         
     def forward(self, x):
-        # Her konvolüsyon sonrası aktivasyon ve boyut küçültme
-        x = F.relu(self.conv1(x))
+        # Konvolüsyon bloğu 1
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = F.relu(x)
         x = F.max_pool2d(x, 2)
-        x = F.relu(self.conv2(x))
+        x = self.dropout1(x)
+        
+        # Konvolüsyon bloğu 2
+        x = self.conv2(x)
+        x = self.bn2(x)
+        x = F.relu(x)
         x = F.max_pool2d(x, 2)
+        x = self.dropout1(x)
         
-        # Çok boyutlu tensörü düz hale getir
-        x = x.view(-1, 64 * 5 * 5)
+        # Konvolüsyon bloğu 3
+        x = self.conv3(x)
+        x = self.bn3(x)
+        x = F.relu(x)
+        x = F.max_pool2d(x, 2)
+        x = self.dropout1(x)
         
-        # Son katmanlarda sınıflandırma
+        # Tam bağlantılı katmanlar
+        x = x.view(-1, 64 * 3 * 3)
         x = F.relu(self.fc1(x))
-        x = self.dropout(x)
-        x = self.fc2(x)
+        x = self.dropout2(x)
+        x = F.relu(self.fc2(x))
+        x = self.dropout2(x)
+        x = self.fc3(x)
         
         return F.log_softmax(x, dim=1) 
