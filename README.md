@@ -1,68 +1,90 @@
 # Digit Recognition
 
-Bu proje, kamera görüntüsünden el yazısı rakamları gerçek zamanlı olarak tanıyan bir CNN modeli kullanmaktadır. Model MNIST veri seti ile eğitilmiştir.
+Bu proje, görüntülerdeki el yazısı rakamları tanıyan bir yapay zeka sistemidir. Hem kamera görüntüsünden gerçek zamanlı tanıma yapabilir, hem de tek görüntüler üzerinde çalışabilir. Aynı anda birden fazla rakamı tespit edip tanıyabilir.
+
+## Özellikler
+
+- Çoklu rakam tespiti ve tanıma
+- Gerçek zamanlı kamera desteği
+- Tek görüntü analizi
+- Güven oranı göstergesi
+- Adaptif görüntü işleme
+- Görsel ve konsol çıktıları
 
 ## Kurulum
 
-### Sanal Ortam Kurulumu
-
-Sanal ortamı oluşturun:
-```bash
-python3 -m venv env
-``` 
-veya
-```bash
-virtualenv env
-```
-
-Sanal ortamı aktif hale getirin:
-```bash
-source env/bin/activate
-```
-
-### Gerekli paketleri yükleyin:
+1. Gerekli Python paketlerini yükleyin:
 ```bash
 pip install -r requirements.txt
 ```
 
-### Projeyi çalıştırmak:
-
-- Model eğitimi için:
+2. Modeli eğitin:
 ```bash
 cd src
 python train.py
 ```
 
-- Kamera ile gerçek zamanlı tahmin için:
+## Kullanım
+
+### 1. Kamera ile Gerçek Zamanlı Tanıma
 ```bash
-cd src
-python predict.py
+python predict.py --camera
 ```
+- Kameraya rakam gösterin
+- Yeşil kutular: Yüksek güvenle tanınan rakamlar (>0.7)
+- Turuncu kutular: Düşük güvenle tanınan rakamlar (<0.7)
+- Çıkmak için 'q' tuşuna basın
+
+### 2. Tek Görüntü Analizi
+```bash
+python predict.py --image path/to/image.jpg
+```
+- Program görüntüdeki tüm rakamları tespit eder
+- Her rakam için güven oranını gösterir
+- Sonuçları hem görsel hem konsol çıktısı olarak verir
 
 ## Proje Yapısı
 
 ```
-project/
-├── data/           # MNIST veri seti otomatik olarak buraya indirilecek
-├── models/         # Eğitilmiş model dosyaları
+.
 ├── src/
 │   ├── model.py    # CNN model tanımı
 │   ├── train.py    # Model eğitimi
-│   └── predict.py  # Gerçek zamanlı tahmin
+│   └── predict.py  # Rakam tanıma sistemi
+├── data/           # MNIST veri seti
+├── models/         # Eğitilmiş model dosyaları
 └── requirements.txt
 ```
 
-## Kullanım
+## En İyi Sonuç İçin Öneriler
 
-1. Önce modeli eğitin (`train.py`). Bu işlem MNIST veri setini otomatik olarak indirecek ve modeli eğitecektir.
-2. Eğitim tamamlandıktan sonra, `predict.py` ile kamera görüntüsünden gerçek zamanlı tahmin yapabilirsiniz.
-3. Programı sonlandırmak için 'q' tuşuna basın.
+1. **Görüntü Kalitesi**:
+   - Beyaz kağıt üzerine siyah kalemle yazın
+   - Rakamları net ve okunaklı yazın
+   - İyi aydınlatma kullanın
 
-## Model Mimarisi
+2. **Rakam Yazımı**:
+   - Rakamları birbirinden ayrık yazın
+   - Çok küçük veya çok büyük yazmaktan kaçının
+   - MNIST stiline benzer şekilde yazın
 
-- 2 Konvolüsyon katmanı
-- 2 MaxPooling katmanı
-- 2 Tam bağlantılı katman
-- Dropout (0.25) düzenleştirme
-- ReLU aktivasyon fonksiyonları
-- Softmax çıkış katmanı 
+3. **Kamera Kullanımı**:
+   - Kamerayı sabit tutun
+   - Kağıdı düz tutun
+   - Gölge oluşturmaktan kaçının
+
+## Hata Durumları
+
+1. **Anomali / Düşük Güven Oranı (Turuncu Kutu)**:
+   - Rakamı daha net yazın
+   - Aydınlatmayı iyileştirin
+   - Kağıdı kameraya daha yakın tutun
+
+2. **Tespit Edilemeyen Rakamlar**:
+   - Kontrastı artırın
+   - Rakamı büyük yazın
+   - Arka plan temizliğinden emin olun
+
+## Teknik Detaylar
+
+Daha detaylı teknik bilgi için `DOCUMENTATION.md` dosyasına bakın. 
