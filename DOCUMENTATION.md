@@ -1,18 +1,16 @@
-# El Yazısı Rakam Tanıma Projesi - Teknik Dokümantasyon
+# Handwritten Digit Recognition
 
-## Proje Yapısı
+## Project Structure
 
 ```
 .
-├── src/           # Kaynak kodlar
-├── data/          # MNIST veri seti
-├── models/        # Eğitilmiş model dosyaları
+├── src/           # Source code
+├── data/          # MNIST dataset
+├── models/        # Trained model files
 └── requirements.txt
 ```
 
-## Teknik Detaylar
-
-### CNN (Convolutional Neural Network) Mimarisi
+## CNN (Convolutional Neural Network) Mimarisi
 
 #### 1. Konvolüsyon Katmanları
 - **Ne İşe Yarar?** Görüntüdeki özellikleri (kenarlar, dokular, desenler) tespit eder
@@ -20,7 +18,7 @@
   - Küçük bir filtre (kernel) görüntü üzerinde kaydırılır
   - Her pozisyonda piksel grupları üzerinde matematiksel işlemler yapılır
   - Sonuçta bir özellik haritası (feature map) oluşur
-- **Projemizdeki Kullanımı:**
+- **Nasıl Kullandık?**
   ```python
   self.conv1 = nn.Conv2d(1, 32, kernel_size=3)  # 1 kanal girişten 32 özellik haritası
   self.conv2 = nn.Conv2d(32, 64, kernel_size=3) # 32 kanaldan 64 özellik haritası
@@ -32,7 +30,7 @@
   - Belirli bir bölgedeki en yüksek değeri alır (MaxPooling)
   - Görüntü boyutu küçülür ama önemli özellikler korunur
   - İşlem yükü azalır
-- **Projemizdeki Kullanımı:**
+- **Nasıl Kullandık?**
   ```python
   x = F.max_pool2d(x, 2)  # 2x2'lik bölgeleri 1 piksele indirir
   ```
@@ -43,7 +41,7 @@
   - Özellik haritaları düz bir vektöre çevrilir
   - Her nöron bir önceki katmandaki tüm nöronlara bağlanır
   - Son katman sınıf sayısı kadar nöron içerir (bizim durumumuzda 10 rakam)
-- **Projemizdeki Kullanımı:**
+- **Nasıl Kullandık?**
   ```python
   self.fc1 = nn.Linear(64 * 5 * 5, 128)  # Özellik haritalarını 128 nörona bağla
   self.fc2 = nn.Linear(128, 10)          # 10 rakam için çıkış katmanı
@@ -57,7 +55,7 @@
   - Negatif değerleri 0 yapar
   - Pozitif değerleri aynen geçirir
   - f(x) = max(0, x)
-- **Neden Kullanıyoruz?**
+  - **Neden Kullanıyoruz?**
   - Hesaplaması kolay
   - Gradyan kaybını önler
   - Eğitimi hızlandırır
@@ -68,7 +66,7 @@
   - Eğitim sırasında rastgele nöronları devre dışı bırakır
   - Her epoch'ta farklı nöronlar kapatılır
   - Test sırasında tüm nöronlar aktif olur
-- **Projemizdeki Kullanımı:**
+- **Nasıl Kullandık?**
   ```python
   self.dropout = nn.Dropout2d(0.25)  # Nöronların %25'ini kapat
   ```
