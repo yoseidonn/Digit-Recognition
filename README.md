@@ -1,4 +1,4 @@
-# El Yazısı Rakam Tanıma
+# Digit Recognition
 
 Bu proje, kamera görüntüsünden el yazısı rakamları gerçek zamanlı olarak tanıyan bir CNN modeli kullanmaktadır. Model MNIST veri seti ile eğitilmiştir.
 
